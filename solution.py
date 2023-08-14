@@ -47,10 +47,17 @@ def main():
     store_agg['LAG7_S'] = store_agg.groupby('store')['quantity'].transform(lambda x: x.shift(7))
     store_agg['date'] = pd.to_datetime(store_agg['date'])
 
+    filtered_df['MA7_P'] = filtered_df.groupby('product')['quantity'].transform(lambda x: x.rolling(window=7, min_periods=1).mean())
+    filtered_df['LAG7_P'] = filtered_df.groupby('product')['quantity'].transform(lambda x: x.shift(7))
+
     # Sonuç veri çerçevelerini birleştirme
     result = filtered_df.merge(brand_agg, on=['store', 'date'], how='left', suffixes=('', '_brand'))
     result = result.merge(store_agg, on=['store', 'date'], how='left', suffixes=('', '_store'))
 
+    # Sonuç veri çerçevesini seçme ve sütun adlarını düzenleme
+    result = result[['product', 'store', 'id', 'date', 'quantity', 'MA7_P', 'LAG7_P', 'quantity_brand', 'MA7_B', 'LAG7_B', 'quantity_store', 'MA7_S', 'LAG7_S']]
+    result.columns = ['product_id', 'store_id', 'brand_id', 'date', 'sales_product', 'MA7_P', 'LAG7_P', 'sales_brand', 'MA7_B', 'LAG7_B', 'sales_store', 'MA7_S', 'LAG7_S']
+    
     # Sonuçları CSV dosyasına yazma
     result.to_csv('features.csv', index=False)
 
